@@ -1,0 +1,17 @@
+lvgl-build
+*.rej
+*.orig
+*.swp
+*.save*
+*.o
+*.o
+*.a
+*.out
+*.lib
+*.obj
+*.dll
+*.so
+*.exe
+*.plist
+/menu
+/menu_debug

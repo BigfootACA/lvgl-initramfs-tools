@@ -1,0 +1,18 @@
+LVGL_DIR_NAME ?= lvgl
+LVGL_DIR ?= ${shell pwd}/../
+CWARN  = -Wall -Werror -Wshadow -Wundef -Wextra
+CWARN += -Wno-error=strict-prototypes -Wno-pointer-arith -fno-strict-aliasing
+CWARN += -Wno-error=cpp -Wuninitialized -Wno-unused-parameter
+CWARN += -Wno-missing-field-initializers -Wtype-limits -Wsizeof-pointer-memaccess
+CWARN += -Wno-format-nonliteral -Wno-cast-qual -Wunreachable-code -Wno-switch-default
+CWARN += -Wno-switch-enum -Wreturn-type -Wmultichar -Wno-ignored-qualifiers
+CWARN += -Wno-error=pedantic -Wno-sign-compare -Wno-error=missing-prototypes
+CWARN += -Wdeprecated -Wempty-body -Wshift-negative-value
+CWARN += -Wno-unused-value -Wdouble-promotion -Wno-pointer-sign
+CFLAGS  += -O3 -include ../src/lv_conf.h -I ../fonts -DLV_CONF_SKIP=1 $(CWARN) -fPIC
+include $(LVGL_DIR)/lvgl/lvgl.mk
+include ../Makefile.template
+OBJEXT ?= .o
+COBJS = $(CSRCS:.c=$(OBJEXT))
+all: liblvgl.so
+liblvgl.so: $(COBJS)

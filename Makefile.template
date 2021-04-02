@@ -1,0 +1,10 @@
+
+%.o: %.c
+	@echo "  CC      $@"
+	@$(CC) $(CFLAGS) $(_CFLAGS) -c $< -o $@
+%.so:
+	@echo "  LD      $@"
+	$(CC) -shared $^ -o $@
+%.a:
+	@echo "  AR      $@"
+	@$(AR) cr $@ $^
