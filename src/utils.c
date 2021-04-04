@@ -54,15 +54,19 @@ static void _fd_perror(int fd,const char*format,va_list a){
 }
 void fd_perror(int fd,const char*format,...){
 	va_list a;
-	if(format)va_start(a,format);
-	_fd_perror(fd,format,a);
-	if(format)va_end(a);
+	if(format){
+		va_start(a,format);
+		_fd_perror(fd,format,a);
+		va_end(a);
+	}
 }
 int ret_perror(int err,bool quit,const char*format,...){
 	va_list a;
-	if(format)va_start(a,format);
-	_fd_perror(STDERR_FILENO,format,a);
-	if(format)va_end(a);
+	if(format){
+		va_start(a,format);
+		_fd_perror(STDERR_FILENO,format,a);
+		va_end(a);
+	}
 	if(quit)exit(err);
 	return err;
 }
