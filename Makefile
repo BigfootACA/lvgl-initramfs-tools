@@ -16,16 +16,15 @@ LIBS    += -lm -lpthread $(LIBDRM_LIBS) $(JSON_C_LIBS)
 export CROSS_COMPILE CC AR PKGCONF STRIP CFLAGS LDFLAGS LIBS TOP
 include Makefile.template
 all: menu
-lvgl-built: Makefile.lvgl
+lvgl-build/liblvgl.so: Makefile.lvgl FORCE
 	@mkdir -p lvgl-build
 	@$(MAKE) -C lvgl-build -f ../$< all
-src/src.a src/menu.o: src/Makefile FORCE
+src/src.a: src/Makefile FORCE
 	@$(MAKE) -C src all
-fonts/liblvgl_font.so: FORCE
-	$(MAKE) -C fonts liblvgl_font.so
-lvgl-build/liblvgl.so: lvgl-built FORCE
-	@true
-menu_debug: src/menu.o src/src.a lvgl-build/liblvgl.so fonts/liblvgl_font.so
+fonts/liblvgl_font.so: fonts/Makefile FORCE
+	@$(MAKE) -C fonts liblvgl_font.so
+dialog/menu.o: dialog/menu.c lvgl/lvgl.h src/lv_conf.h src/drivers.h
+menu_debug: dialog/menu.o src/src.a lvgl-build/liblvgl.so fonts/liblvgl_font.so
 	@echo "  CCLD    $@"
 	@$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 menu: menu_debug
@@ -39,8 +38,10 @@ clean-lvgl:
 	@-cd lvgl;git clean -xdfq
 clean-src: src/Makefile
 	@find src -name '*.o' -or -name '*.a'|xargs rm -f
+clean-dialog: src/Makefile
+	@find dialog -name '*.o' -or -name '*.a'|xargs rm -f
 clean-fonts: fonts/Makefile
 	@find fonts -name '*.o' -or -name '*.a'|xargs rm -f
-clean: clean-lvgl clean-src clean-fonts clean-bin
+clean: clean-lvgl clean-src clean-fonts clean-bin clean-dialog
 FORCE:
-.PHONY: test clean all FORCE
+.PHONY: test clean all FORCE clean-lvgl clean-src clean-fonts clean-bin clean-dialog

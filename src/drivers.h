@@ -1,7 +1,7 @@
 #ifndef DRIVERS_H
 #define DRIVERS_H
 #define LV_CONF_INCLUDE_SIMPLE
-#include"lvgl.h"
+#include"../lvgl/lvgl.h"
 #include<stdbool.h>
 extern void fbdev_exit(void);
 extern int fbdev_init(char*dev);

@@ -1,4 +1,3 @@
-#include"drivers.h"
 #include<time.h>
 #include<errno.h>
 #include<stdio.h>
@@ -11,9 +10,10 @@
 #include<sys/time.h>
 #include<sys/wait.h>
 #include<sys/stat.h>
-#include"lv_conf.h"
-#include"utils.h"
-#include"lib.h"
+#include"../src/lv_conf.h"
+#include"../src/drivers.h"
+#include"../src/utils.h"
+#include"../src/lib.h"
 #include<json-c/json.h>
 #define DIS_X(x) (int)(w/100*x)
 #define DIS_Y(y) (int)(h/200*y)
