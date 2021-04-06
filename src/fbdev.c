@@ -278,7 +278,6 @@ void fbdev_flush(lv_disp_drv_t*drv,const lv_area_t*area,lv_color_t*color_p){
 		}
 	}
 	lv_disp_flush_ready(drv);
-	fprintf(stdout,"fbdev: flush\n");
 }
 void fbdev_get_sizes(uint32_t*width,uint32_t*height){
 	if(width)*width=vinfo.xres;
