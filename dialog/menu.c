@@ -14,9 +14,7 @@
 #include"../src/drivers.h"
 #include"../src/utils.h"
 #include"../src/lib.h"
-#include<json-c/json.h>
-#define DIS_X(x) (int)(w/100*x)
-#define DIS_Y(y) (int)(h/200*y)
+#include"../src/json.h"
 struct item_s{
 	unsigned int id;
 	char title[64],action[32];
@@ -31,10 +29,11 @@ struct config_s{
 };
 typedef struct config_s config_t;
 static config_t config;
-static lv_obj_t*ok=NULL;
+static lv_obj_t*ok=NULL,*lang=NULL;
 static bool is_state(lv_obj_t*obj,lv_state_t state){
 	return lv_obj_get_state(obj,LV_BTN_PART_MAIN)&state;
 }
+const char**main_argv;
 static void checked_btn(lv_obj_t*obj,lv_event_t event){
 	if(event!=LV_EVENT_VALUE_CHANGED)return;
 	item_t*t=NULL;
@@ -105,11 +104,21 @@ static void _draw(lv_obj_t*screen){
 	lv_obj_add_state(ok,LV_STATE_DISABLED|LV_STATE_CHECKED);
 	lv_label_set_text(lv_label_create(ok,NULL),config.confirm);
 
+	// language button
+	lang=lv_btn_create(screen,NULL);
+	lv_obj_set_event_cb(lang,i81n_click);
+	lv_obj_set_size(lang,DIS_X(20),DIS_Y(12));
+	lv_obj_align(lang,NULL,LV_ALIGN_IN_BOTTOM_RIGHT,0,0);
+	lv_label_set_text(lv_label_create(lang,NULL),"i18n");
+	lv_obj_add_style(lang,LV_OBJ_PART_MAIN,&style);
+
 	// copyright
 	lv_obj_t*copyright=lv_label_create(screen,NULL);
 	lv_label_set_text(copyright,"Author: BigfootACA");
 	lv_obj_add_style(copyright,LV_LABEL_PART_MAIN,NULL);
 	lv_obj_align(copyright,NULL,LV_ALIGN_IN_BOTTOM_MID,0,DIS_Y(-10));
+
+	init_translate_selector(screen);
 }
 #define JSON_MUST_TYPE(jo,type,str)\
 	if(json_object_get_type(jo)!=type){\
@@ -125,22 +134,18 @@ static void _draw(lv_obj_t*screen){
 	if((jb=json_object_object_get(jo,key))){\
 		JSON_MUST_TYPE(jb,json_type_string,path " must be string\n");\
 		JSON_TO_STRING(jb,s);\
-		memset(val,0,sizeof(val));\
-		strncpy(val,s,sizeof(val)-1);\
+		translate(s,val,sizeof(val));\
 	}
-static int parse_config(char*cfg){
-	json_object*jo=NULL;
-	if(!(jo=json_object_from_file(cfg))){
-		fprintf(stderr,"read %s failed: %s",cfg,json_util_get_last_err());
-		return -1;
-	}
+static json_object*sys_config=NULL;
+static int parse_config(){
 	char*s;
 	json_object*jb=NULL;
-	JSON_PARSE_STRING(jo,jb,"title",">title",config.title)
-	JSON_PARSE_STRING(jo,jb,"confirm",">confirm",config.confirm)
-	if((jb=json_object_object_get(jo,"items"))){
+	get_translate_object(sys_config);
+	JSON_PARSE_STRING(sys_config,jb,"title",">title",config.title)
+	JSON_PARSE_STRING(sys_config,jb,"confirm",">confirm",config.confirm)
+	if((jb=json_object_object_get(sys_config,"items"))){
 		json_object*jr,*jx;
-		JSON_MUST_TYPE(jb,json_type_array,">items[*] must be array");
+		JSON_MUST_TYPE(jb,json_type_array,">items must be array");
 		item_t*v;
 		int top=0;
 		for(size_t d=0,x=0;d<json_object_array_length(jb)&&d<32;d++){
@@ -155,7 +160,17 @@ static int parse_config(char*cfg){
 			config.items[x++]=v;
 		}
 	}
-	json_object_put(jo);
+	return 0;
+}
+static int load_config(char*cfg){
+	if(!(sys_config=json_object_from_file(cfg))){
+		fprintf(stderr,"read %s failed: %s",cfg,json_util_get_last_err());
+		return -1;
+	}
+	if(parse_config()<0){
+		fprintf(stderr,"parsing config %s failed\n",cfg);
+		return -2;
+	}
 	return 0;
 }
 static void init_config(){
@@ -170,10 +185,11 @@ int main(int argc,char**argv){
 		fprintf(stderr,"Usage: guimenu <CONFIG>\n");
 		return 1;
 	}
+	main_argv=(const char**)argv;
 	init_config();
-	if(parse_config(argv[1])<0){
-		fprintf(stderr,"parsing config %s failed\n",argv[1]);
-		return 2;
+	if(load_config(argv[1])<0){
+		fprintf(stderr,"failed to load config %s\n",argv[1]);
+		return -1;
 	}
 	return _exec(_draw);
 }

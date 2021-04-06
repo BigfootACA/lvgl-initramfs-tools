@@ -4,7 +4,8 @@ all: src.a
 drm.o: drm.c drivers.h ../lvgl/lvgl.h lv_conf.h utils.h
 fbdev.o: fbdev.c drivers.h ../lvgl/lvgl.h lv_conf.h utils.h
 lib.o: lib.c ../lvgl/lvgl.h lv_conf.h drivers.h
-src.a: fbdev.o drm.o ts.o utils.o lib.o
+src.a: fbdev.o drm.o ts.o utils.o lib.o translate.o
 ts.o: ts.c drivers.h ../lvgl/lvgl.h lv_conf.h utils.h
+translate.o: json.h
 utils.o: utils.h
 .PHONY: all
