@@ -152,7 +152,6 @@ static int parse_config(){
 			if(!(jr=json_object_array_get_idx(jb,d)))continue;
 			if(!(v=malloc(sizeof(item_t))))continue;
 			memset(v,0,sizeof(item_t));
-			fprintf(stderr,"idx %ld\n",d);
 			JSON_PARSE_STRING(jr,jx,"title",">items[*]>title",v->title)
 			JSON_PARSE_STRING(jr,jx,"action",">items[*]>action",v->action)
 			v->top=top;
