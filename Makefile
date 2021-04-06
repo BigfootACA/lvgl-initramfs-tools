@@ -26,7 +26,7 @@ fonts/liblvgl_font.so: fonts/Makefile FORCE
 dialog/menu.o: dialog/menu.c lvgl/lvgl.h src/lv_conf.h src/drivers.h
 menu_debug: dialog/menu.o src/src.a lvgl-build/liblvgl.so fonts/liblvgl_font.so
 	@echo "  CCLD    $@"
-	@$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
+	@$(CC) -o $@ dialog/menu.o src/src.a -llvgl -llvgl_font -Llvgl-build -Lfonts $(LDFLAGS) $(LIBS)
 menu: menu_debug
 	@echo "  STRIP   $@"
 	@$(STRIP) $^ -o $@
