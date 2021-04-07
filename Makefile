@@ -15,7 +15,7 @@ LDFLAGS += -g
 LIBS    += -lm -lpthread $(LIBDRM_LIBS) $(JSON_C_LIBS)
 export CROSS_COMPILE CC AR PKGCONF STRIP CFLAGS LDFLAGS LIBS TOP
 include Makefile.template
-all: menu
+all: menu usb
 lvgl-build/liblvgl.so: Makefile.lvgl FORCE
 	@mkdir -p lvgl-build
 	@$(MAKE) -C lvgl-build -f ../$< all
@@ -27,7 +27,14 @@ dialog/menu.o: dialog/menu.c lvgl/lvgl.h src/lv_conf.h src/drivers.h
 menu_debug: dialog/menu.o src/src.a lvgl-build/liblvgl.so fonts/liblvgl_font.so
 	@echo "  CCLD    $@"
 	@$(CC) -o $@ dialog/menu.o src/src.a -llvgl -llvgl_font -Llvgl-build -Lfonts $(LDFLAGS) $(LIBS)
+usb_debug: dialog/usb.o src/src.a lvgl-build/liblvgl.so fonts/liblvgl_font.so
+	@echo "  CCLD    $@"
+	@$(CC) -o $@ dialog/usb.o src/src.a -llvgl -llvgl_font -Llvgl-build -Lfonts $(LDFLAGS) $(LIBS)
 menu: menu_debug
+	@echo "  STRIP   $@"
+	@$(STRIP) $^ -o $@
+	@ls -lh $@
+usb: usb_debug
 	@echo "  STRIP   $@"
 	@$(STRIP) $^ -o $@
 	@ls -lh $@

@@ -15,3 +15,5 @@ lvgl-build
 *.plist
 /menu
 /menu_debug
+/usb
+/usb_debug
