@@ -14,7 +14,6 @@
 #include"../src/drivers.h"
 #include"../src/utils.h"
 #include"../src/lib.h"
-#include"usb_icon.h"
 const char**main_argv;
 LV_IMG_DECLARE(usb_icon);
 static void _draw(lv_obj_t*screen){
