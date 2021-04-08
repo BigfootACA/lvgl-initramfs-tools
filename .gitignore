@@ -17,3 +17,5 @@ lvgl-build
 /menu_debug
 /usb
 /usb_debug
+.installed
+.built
