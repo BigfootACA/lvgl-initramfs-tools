@@ -19,17 +19,19 @@ all: menu usb
 lvgl-build/liblvgl.so: Makefile.lvgl FORCE
 	@mkdir -p lvgl-build
 	@$(MAKE) -C lvgl-build -f ../$< all
-src/src.a: src/Makefile FORCE
-	@$(MAKE) -C src all
+src/liblvgl_tool.so: src/Makefile FORCE
+	@$(MAKE) -C src liblvgl_tool.so
 fonts/liblvgl_font.so: fonts/Makefile FORCE
 	@$(MAKE) -C fonts liblvgl_font.so
+icons/liblvgl_icon.so: icons/Makefile FORCE
+	@$(MAKE) -C icons liblvgl_icon.so
 dialog/menu.o: dialog/menu.c lvgl/lvgl.h src/lv_conf.h src/drivers.h
-menu_debug: dialog/menu.o src/src.a lvgl-build/liblvgl.so fonts/liblvgl_font.so
+menu_debug: dialog/menu.o src/liblvgl_tool.so lvgl-build/liblvgl.so fonts/liblvgl_font.so icons/liblvgl_icon.so
 	@echo "  CCLD    $@"
-	@$(CC) -o $@ dialog/menu.o src/src.a -llvgl -llvgl_font -llvgl_icon -Llvgl-build -Lfonts -Licons $(LDFLAGS) $(LIBS)
-usb_debug: dialog/usb.o src/src.a lvgl-build/liblvgl.so fonts/liblvgl_font.so
+	@$(CC) -o $@ dialog/menu.o -llvgl_tool -llvgl -llvgl_font -llvgl_icon -Lsrc -Llvgl-build -Lfonts -Licons $(LDFLAGS) $(LIBS)
+usb_debug: dialog/usb.o src/liblvgl_tool.so lvgl-build/liblvgl.so fonts/liblvgl_font.so icons/liblvgl_icon.so
 	@echo "  CCLD    $@"
-	@$(CC) -o $@ dialog/usb.o src/src.a -llvgl -llvgl_font -llvgl_icon -Llvgl-build -Lfonts -Licons $(LDFLAGS) $(LIBS)
+	@$(CC) -o $@ dialog/usb.o -llvgl_tool -llvgl -llvgl_font -llvgl_icon -Lsrc -Llvgl-build -Lfonts -Licons $(LDFLAGS) $(LIBS)
 menu: menu_debug
 	@echo "  STRIP   $@"
 	@$(STRIP) $^ -o $@
@@ -39,16 +41,18 @@ usb: usb_debug
 	@$(STRIP) $^ -o $@
 	@ls -lh $@
 clean-bin:
-	@rm -f menu{_debug,}
+	@rm -f {menu,usb}{_debug,}
 clean-lvgl:
 	@rm -rf lvgl-build
 	@-cd lvgl;git clean -xdfq
 clean-src: src/Makefile
-	@find src -name '*.o' -or -name '*.a'|xargs rm -f
+	@find src -name '*.o' -or -name '*.a' -or -name '*.so'|xargs rm -f
 clean-dialog: src/Makefile
-	@find dialog -name '*.o' -or -name '*.a'|xargs rm -f
+	@find dialog -name '*.o' -or -name '*.a' -or -name '*.so'|xargs rm -f
 clean-fonts: fonts/Makefile
-	@find fonts -name '*.o' -or -name '*.a'|xargs rm -f
-clean: clean-lvgl clean-src clean-fonts clean-bin clean-dialog
+	@find fonts -name '*.o' -or -name '*.a' -or -name '*.so'|xargs rm -f
+clean-icons: icons/Makefile
+	@find icons -name '*.o' -or -name '*.a' -or -name '*.so'|xargs rm -f
+clean: clean-lvgl clean-src clean-fonts clean-bin clean-dialog clean-icons
 FORCE:
-.PHONY: test clean all FORCE clean-lvgl clean-src clean-fonts clean-bin clean-dialog
+.PHONY: test clean all FORCE clean-lvgl clean-src clean-fonts clean-bin clean-dialog clean-icons
