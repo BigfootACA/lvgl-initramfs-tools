@@ -14,5 +14,6 @@ include $(LVGL_DIR)/lvgl/lvgl.mk
 include ../Makefile.template
 OBJEXT ?= .o
 COBJS = $(CSRCS:.c=$(OBJEXT))
-all: liblvgl.so
+all: liblvgl.so liblvgl.a
 liblvgl.so: $(COBJS)
+liblvgl.a: $(COBJS)

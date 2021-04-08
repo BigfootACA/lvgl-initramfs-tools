@@ -15,7 +15,9 @@ lvgl-build
 *.plist
 /menu
 /menu_debug
+/menu_static
 /usb
 /usb_debug
+/usb_static
 .installed
 .built
