@@ -7,6 +7,7 @@
 #include"drivers.h"
 #include"json.h"
 #include"lib.h"
+LV_IMG_DECLARE(locale_icon);
 static json_object*trans=NULL,*trans_all=NULL;
 struct lang_item{
 	bool selected;
@@ -95,7 +96,7 @@ static void lang_select(lv_obj_t*obj,lv_event_t event){
 		lv_obj_clear_state(trans_gui.select_ok,LV_STATE_DISABLED);
 	}
 }
-void i81n_click(lv_obj_t*obj,lv_event_t event){
+static void i18n_click(lv_obj_t*obj,lv_event_t event){
 	if(event!=LV_EVENT_CLICKED)return;
 	lv_obj_set_hidden(trans_gui.selector,false);
 	lv_obj_set_hidden(trans_gui.select_ok,false);
@@ -140,4 +141,15 @@ void init_translate_selector(lv_obj_t*screen){
 	lv_label_set_text(lv_label_create(trans_gui.select_ok,NULL),"OK");
 	lv_obj_set_hidden(trans_gui.select_ok,true);
 	lv_obj_set_event_cb(trans_gui.select_ok,lang_select);
+}
+void add_language_button(lv_obj_t*screen){
+	add_language_button_custom(screen,locale_icon);
+}
+void add_language_button_custom(lv_obj_t*screen,lv_img_dsc_t icon){
+	lv_obj_t*lang_btn=lv_imgbtn_create(screen,NULL);
+	lv_obj_set_event_cb(lang_btn,i18n_click);
+	lv_obj_set_size(lang_btn,icon.header.w,icon.header.h);
+	lv_obj_align(lang_btn,NULL,LV_ALIGN_IN_BOTTOM_RIGHT,DIS_X(-4),DIS_Y(-4));
+	lv_imgbtn_set_src(lang_btn,LV_BTN_STATE_RELEASED,&icon);
+	lv_imgbtn_set_src(lang_btn,LV_BTN_STATE_PRESSED,&icon);
 }

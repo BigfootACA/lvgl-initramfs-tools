@@ -15,7 +15,6 @@
 #include"../src/utils.h"
 #include"../src/lib.h"
 #include"../src/json.h"
-LV_IMG_DECLARE(locale_icon);
 struct item_s{
 	unsigned int id;
 	char title[64],action[32];
@@ -30,7 +29,7 @@ struct config_s{
 };
 typedef struct config_s config_t;
 static config_t config;
-static lv_obj_t*ok=NULL,*lang=NULL;
+static lv_obj_t*ok=NULL;
 static bool is_state(lv_obj_t*obj,lv_state_t state){
 	return lv_obj_get_state(obj,LV_BTN_PART_MAIN)&state;
 }
@@ -106,13 +105,7 @@ static void _draw(lv_obj_t*screen){
 	lv_label_set_text(lv_label_create(ok,NULL),config.confirm);
 
 	// language button
-	lang=lv_imgbtn_create(screen,NULL);
-	lv_obj_set_event_cb(lang,i81n_click);
-	lv_obj_set_size(lang,locale_icon.header.w,locale_icon.header.h);
-	lv_obj_align(lang,NULL,LV_ALIGN_IN_BOTTOM_RIGHT,DIS_X(-4),DIS_Y(-4));
-	lv_imgbtn_set_src(lang,LV_BTN_STATE_RELEASED,&locale_icon);
-	lv_imgbtn_set_src(lang,LV_BTN_STATE_PRESSED,&locale_icon);
-	lv_obj_add_style(lang,LV_OBJ_PART_MAIN,&style);
+	add_language_button(screen);
 
 	// copyright
 	lv_obj_t*copyright=lv_label_create(screen,NULL);
