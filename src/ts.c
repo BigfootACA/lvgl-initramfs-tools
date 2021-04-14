@@ -63,6 +63,7 @@ void ts_init(char*dev){
 	if(tsp!=0)fprintf(stderr,"touchscreen thread already running\n");
 	else if(pthread_create(&tsp,NULL,ts_handler,(void*)x)!=0)fprintf(stderr,"create thread failed\n");
 	else pthread_setname_np(tsp,"TouchScreen Thread");
+	free(x);
 }
 bool ts_read(struct _lv_indev_drv_t*indev_drv,lv_indev_data_t*data){
 	data->point.x=last_x;
