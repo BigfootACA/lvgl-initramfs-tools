@@ -36,7 +36,7 @@ static int fbdev_refresher_start(){
 }
 static int set_brightness_percent(char*name,int percent){
 	if(!name||percent<0||percent>100||strcmp(name,"..")==0)return -1;
-	int c,dir=-1,dmax=-1,dcur=-1,len,r=-1;
+	int c,dir=-1,dmax=-1,dcur=-1,r=-1;
 	long max=0;
 	struct stat s;
 	char path[512]={0},buff[64]={0};
@@ -48,7 +48,7 @@ static int set_brightness_percent(char*name,int percent){
 		!(S_ISDIR(s.st_mode)||S_ISLNK(s.st_mode))||
 		(dir=open(path,O_DIRECTORY))<0||
 		(dmax=openat(dir,"max_brightness",O_RDONLY))<0||
-		(len=read(dmax,buff,64))<=0||
+		read(dmax,buff,64)<=0||
 		(max=atol(buff))<=0
 	){
 		printf("failed to open device %s",name);
@@ -196,7 +196,7 @@ static int _fbdev_scan(){
 			snprintf(ddev,255,dgfmt,i);
 			if((dfd=open(ddev,O_RDWR))<0){
 				if(errno!=ENOENT)stderr_perror("open device %s",ddev);
-				close(sfd);sfd=-1;
+				close(sfd);
 				continue;
 			}
 		}
@@ -206,8 +206,8 @@ static int _fbdev_scan(){
 			fprintf(stderr,"scan framebuffer device fb%d use driver %s\n",i,driver);
 			if(!strcmp(driver,"vfb")){
 				fprintf(stderr,"device fb%d seems to be Virtual FrameBuffer, skip\n",i);
-				close(sfd);sfd=-1;
-				close(dfd);dfd=-1;
+				close(sfd);
+				close(dfd);
 				continue;
 			}
 		}
