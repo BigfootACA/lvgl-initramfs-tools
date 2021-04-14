@@ -325,31 +325,29 @@ free_res:
 static int drm_open(int fd){
 	int flags;
 	uint64_t has_dumb;
-	int ret;
 	if((flags=fcntl(fd,F_GETFD))<0||fcntl(fd,F_SETFD,flags|FD_CLOEXEC)<0)
 		return return_stderr_printf(-1,"drm: fcntl FD_CLOEXEC failed");
-	if((ret=drmGetCap(fd,DRM_CAP_DUMB_BUFFER,&has_dumb))<0||has_dumb==0)
+	if(drmGetCap(fd,DRM_CAP_DUMB_BUFFER,&has_dumb)<0||has_dumb==0)
 		return return_stderr_printf(-1,"drm: drmGetCap DRM_CAP_DUMB_BUFFER failed or does not have dumb buffer\n");
 	drm_dev.fd=fd;
 	return fd;
 }
 static int drm_setup(int fd,unsigned int fourcc){
-	int ret;
 	if(drm_open(fd)<0)return -1;
-	if((ret=drmSetClientCap(fd,DRM_CLIENT_CAP_ATOMIC,1)))return return_stderr_perror(-1,"drm: no atomic modesetting support");
-	if((ret=drm_find_connector()))return return_stderr_printf(-1,"drm: available drm devices not found\n");
-	if((ret=find_plane(
+	if(drmSetClientCap(fd,DRM_CLIENT_CAP_ATOMIC,1))return return_stderr_perror(-1,"drm: no atomic modesetting support");
+	if(drm_find_connector())return return_stderr_printf(-1,"drm: available drm devices not found\n");
+	if(find_plane(
 		fourcc,
 		&drm_dev.plane_id,
 		drm_dev.crtc_id,
 		drm_dev.crtc_idx
-	)))return return_stderr_printf(-1,"drm: can not find plane\n");
+	))return return_stderr_printf(-1,"drm: can not find plane\n");
 	if(!(drm_dev.plane=drmModeGetPlane(fd,drm_dev.plane_id)))return return_stderr_printf(-1,"drm: can not get plane\n");
 	if(!(drm_dev.crtc=drmModeGetCrtc(fd,drm_dev.crtc_id)))return return_stderr_printf(-1,"drm: can not get crtc\n");
 	if(!(drm_dev.conn=drmModeGetConnector(fd,drm_dev.conn_id)))return return_stderr_printf(-1,"drm: can not get connector\n");
-	if((ret=drm_get_plane_props()))return return_stderr_printf(-1,"drm: can not get plane props\n");
-	if((ret=drm_get_crtc_props()))return return_stderr_printf(-1,"drm: can not get crtc props");
-	if((ret=drm_get_conn_props()))return return_stderr_printf(-1,"drm: can not get connector props");
+	if(drm_get_plane_props())return return_stderr_printf(-1,"drm: can not get plane props\n");
+	if(drm_get_crtc_props())return return_stderr_printf(-1,"drm: can not get crtc props");
+	if(drm_get_conn_props())return return_stderr_printf(-1,"drm: can not get connector props");
 	drm_dev.fourcc=fourcc;
 	fprintf(stderr,
 		"drm: found plane_id %u, connector_id %d, crtc_id %d\n",
@@ -371,26 +369,20 @@ static int drm_setup(int fd,unsigned int fourcc){
 static int drm_allocate_dumb(struct drm_buffer*buf){
 	struct drm_mode_create_dumb creq;
 	struct drm_mode_map_dumb mreq;
-	int handles[4]={0},pitches[4]={0},offsets[4]={0},ret;
+	int handles[4]={0},pitches[4]={0},offsets[4]={0};
 	memset(&creq,0,sizeof(creq));
 	creq.width=drm_dev.width;
 	creq.height=drm_dev.height;
 	creq.bpp=LV_COLOR_DEPTH;
-	if((ret=drmIoctl(
-		drm_dev.fd,
-		DRM_IOCTL_MODE_CREATE_DUMB,
-		&creq
-	))<0)return return_stderr_printf(-1,"drm: DRM_IOCTL_MODE_CREATE_DUMB fail\n");
+	if(drmIoctl(drm_dev.fd,DRM_IOCTL_MODE_CREATE_DUMB,&creq)<0)
+		return return_stderr_printf(-1,"drm: DRM_IOCTL_MODE_CREATE_DUMB fail\n");
 	buf->handle=creq.handle;
 	buf->pitch=creq.pitch;
 	buf->size=creq.size;
 	memset(&mreq,0,sizeof(mreq));
 	mreq.handle=creq.handle;
-	if((ret=drmIoctl(
-		drm_dev.fd,
-		DRM_IOCTL_MODE_MAP_DUMB,
-		&mreq
-	)))return return_stderr_printf(-1,"drm: DRM_IOCTL_MODE_MAP_DUMB fail\n");
+	if(drmIoctl(drm_dev.fd,DRM_IOCTL_MODE_MAP_DUMB,&mreq))
+		return return_stderr_printf(-1,"drm: DRM_IOCTL_MODE_MAP_DUMB fail\n");
 	buf->offset=mreq.offset;
 	if((buf->map=mmap(
 		0,
@@ -402,7 +394,7 @@ static int drm_allocate_dumb(struct drm_buffer*buf){
 	))==MAP_FAILED)return return_stderr_printf(-1,"drm: mmap fail\n");
 	memset(buf->map,0,creq.size);
 	handles[0]=creq.handle;pitches[0]=creq.pitch;offsets[0]=0;
-	if((ret=drmModeAddFB2(
+	if(drmModeAddFB2(
 		drm_dev.fd,
 		drm_dev.width,
 		drm_dev.height,
@@ -412,7 +404,7 @@ static int drm_allocate_dumb(struct drm_buffer*buf){
 		offsets,
 		&buf->fb_handle,
 		0
-	)))return return_stderr_printf(-1,"drm: drmModeAddFB fail\n");
+	))return return_stderr_printf(-1,"drm: drmModeAddFB fail\n");
 	return 0;
 }
 static int drm_setup_buffers(void){
@@ -481,12 +473,11 @@ static int _drm_register(){
 }
 
 static int _drm_init_fd(int fd,unsigned int fourcc){
-	int ret;
-	if((ret=drm_setup(fd,fourcc))){
+	if(drm_setup(fd,fourcc)){
 		drm_dev.fd=-1;
 		return -1;
 	}
-	if((ret=drm_setup_buffers())){
+	if(drm_setup_buffers()){
 		fprintf(stderr,"drm: buffer allocation failed\n");
 		drm_dev.fd=-1;
 		return -1;
@@ -528,7 +519,7 @@ static int _drm_scan(){
 		}
 		if((dfd=open(ddev,O_RDWR))<0){
 			if(errno!=ENOENT)stderr_perror("open device %s",ddev);
-			close(sfd);sfd=-1;
+			close(sfd);
 			continue;
 		}
 		fprintf(stderr,"found drm card device %s\n",ddev);
@@ -537,8 +528,8 @@ static int _drm_scan(){
 			fprintf(stderr,"scan drm card device %d use driver %s\n",i,driver);
 			if(!strcmp(driver,"vkms")){
 				fprintf(stderr,"device card%d seems to be Virtual KMS, skip\n",i);
-				close(sfd);sfd=-1;
-				close(dfd);dfd=-1;
+				close(sfd);
+				close(dfd);
 				continue;
 			}
 		}
