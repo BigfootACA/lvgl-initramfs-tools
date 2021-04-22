@@ -120,17 +120,6 @@ bool check_nvalid_default(char*source,size_t size){
 bool check_valid_default(char*source){
 	return check_nvalid_default(source,strlen(source));
 }
-char**array_add_entry(char**array,char*entry){
-	size_t idx=0,s;
-	if(array)while(array[idx++]);
-	else idx++;
-	s=sizeof(char*)*(idx+1);
-	array=array?realloc(array,s):malloc(s);
-	if(!array)return NULL;
-	array[idx-1]=entry;
-	array[idx]=NULL;
-	return array;
-}
 char*array2args(char**arr,char*d){
 	if(!arr||!d)return NULL;
 	char*b,*c;
@@ -164,42 +153,48 @@ void free_chars(char**c){
 }
 char**args2array(char*source,char del){
 	if(!source)return NULL;
-	size_t sidx=0,bidx=0;
-	size_t bs=sizeof(char)*PATH_MAX;
-	char**array=NULL,**arr=NULL,*buff=malloc(bs),c,b;
-	if(!buff)return NULL;
-	memset(buff,0,bs);
-	while((c=source[sidx++])>0&&bidx<bs){
-		if(del==0?(c=='\r'||c=='\n'||c=='\t'||c==' '):c==del){
-			if(bidx<=0)continue;
-			char*r=strdup(buff);
-			if((arr=array_add_entry(array,r)))array=arr;
-			else{
-				if(r)free(r);
-				if(buff)free(buff);
-				if(array)free_chars(array);
-				return NULL;
-			}
-			memset(buff,0,bs);
-			bidx=0;
-			continue;
-		}else if(c=='"'||c=='\''){
-			b=c;
-			while((c=source[sidx++])>0&&bidx<bs){
-				if(c==b||(c=='\\'&&(c=source[sidx++])<=0))break;
-				buff[bidx++]=c;
-			}
-			continue;
-		}else if(c=='\\'&&(c=source[sidx++])<=0)break;
-		buff[bidx++]=c;
+	int item=0;
+	size_t sz=sizeof(char)*(strlen(source)+1);
+	char**array=NULL,*buff=NULL;
+	if(!(buff=malloc(sz)))goto fail;
+	if(!(array=malloc((sizeof(char*)*(item+2)))))goto fail;
+	char*scur=source,*dcur=buff,**arr=NULL,b;
+	memset(buff,0,sz);
+	array[item]=dcur;
+	while(*scur>0)if(del==0?isspace(*scur):del==*scur){
+		scur++;
+		if(*array[item]){
+			dcur++,item++;
+			if(!(arr=realloc(array,(sizeof(char*)*(item+2)))))goto fail;
+			array=arr;
+			array[item]=dcur;
+		}
+	}else if(*scur=='"'||*scur=='\''){
+		b=*scur;
+		while(*scur++&&*scur!=b){
+			if(*scur=='\\')scur++;
+			*dcur++=*scur;
+		}
+		dcur++,scur++;
+	}else *dcur++=*scur++;
+	if(!*array[item]){
+		array[item]=NULL;
+		if(item==0){
+			free(buff);
+			buff=NULL;
+		}
 	}
-	if(bidx>0&&!(array=array_add_entry(array,strndup(buff,bidx+1)))){
-		if(buff)free(buff);
-		if(array)free_chars(array);
-		return NULL;
-	}
+	array[++item]=NULL;
+	if(!(arr=malloc((sizeof(char*)*(item+2)))))goto fail;
+	memset(arr,0,(sizeof(char*)*(item+2)));
+	for(int t=0;array[t];t++)arr[t]=array[t];
+	free(array);
+	return arr;
+	fail:
 	if(buff)free(buff);
-	return array;
+	if(array)free(array);
+	buff=NULL,array=NULL;
+	return NULL;
 }
 static bool is_fail(char*buff,size_t idx){
 	buff[idx]=0;
