@@ -13,6 +13,7 @@ lvgl-build
 *.so
 *.exe
 *.plist
+*.gch
 /menu
 /menu_debug
 /menu_static
