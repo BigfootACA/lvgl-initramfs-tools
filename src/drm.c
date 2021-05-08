@@ -449,12 +449,12 @@ static int _drm_register(){
 	size_t s=drm_dev.width*drm_dev.height;
 	static lv_disp_buf_t disp_buf;
 	if(!(buf1=malloc(s*sizeof(lv_color_t)))){
-		perror("malloc buf1");
+		perror("drm: malloc buf1");
 		drm_exit();
 		return -1;
 	}
 	if(!(buf2=malloc(s*sizeof(lv_color_t)))){
-		perror("malloc buf1");
+		perror("drm: malloc buf2");
 		drm_exit();
 		return -1;
 	}
@@ -465,7 +465,7 @@ static int _drm_register(){
 	lv_disp_drv_init(&disp_drv);
 	disp_drv.hor_res=drm_dev.width;
 	disp_drv.ver_res=drm_dev.height;
-	fprintf(stderr,"screen resolution: %dx%d\n",drm_dev.width,drm_dev.height);
+	fprintf(stderr,"fbdev: screen resolution: %dx%d\n",drm_dev.width,drm_dev.height);
 	disp_drv.buffer=&disp_buf;
 	disp_drv.flush_cb=drm_flush;
 	lv_disp_drv_register(&disp_drv);
@@ -487,7 +487,7 @@ static int _drm_init_fd(int fd,unsigned int fourcc){
 }
 int drm_init(const char*card,unsigned int fourcc){
 	int fd=-1,ret=0;
-	if((fd=open(card,O_RDWR))<0)return return_stderr_perror(-1,"failed to open card %s",card);
+	if((fd=open(card,O_RDWR))<0)return return_stderr_perror(-1,"drm: failed to open card %s",card);
 	if((ret=_drm_init_fd(fd,fourcc))<0)close(fd);
 	return ret;
 }
@@ -505,7 +505,7 @@ static int _drm_scan(){
 	char*dfmt,*sfmt,*driver;
 	char drbuff[128]={0},sdev[256]={0},ddev[256]={0};
 	bool x=access("/dev/dri",F_OK)==0;
-	if(!x&&errno!=ENOENT)return return_perror(-1,"access /dev");
+	if(!x&&errno!=ENOENT)return return_perror(-1,"drm: access /dev");
 	dfmt="/dev/dri/card%d";
 	sfmt="/sys/class/drm/card%d";
 	for(int i=0;i<32;i++){
@@ -514,20 +514,20 @@ static int _drm_scan(){
 		snprintf(sdev,255,sfmt,i);
 		snprintf(ddev,255,dfmt,i);
 		if((sfd=open(sdev,O_DIRECTORY|O_RDONLY))<0){
-			if(errno!=ENOENT)stderr_perror("open sysfs %s",sdev);
+			if(errno!=ENOENT)stderr_perror("drm: open sysfs %s",sdev);
 			continue;
 		}
 		if((dfd=open(ddev,O_RDWR))<0){
-			if(errno!=ENOENT)stderr_perror("open device %s",ddev);
+			if(errno!=ENOENT)stderr_perror("drm: open device %s",ddev);
 			close(sfd);
 			continue;
 		}
-		fprintf(stderr,"found drm card device %s\n",ddev);
+		fprintf(stderr,"drm: found drm card device %s\n",ddev);
 		memset(drbuff,0,127);
 		if((driver=_drm_get_driver_name(sfd,drbuff,127))){
-			fprintf(stderr,"scan drm card device %d use driver %s\n",i,driver);
+			fprintf(stderr,"drm: scan drm card device %d use driver %s\n",i,driver);
 			if(!strcmp(driver,"vkms")){
-				fprintf(stderr,"device card%d seems to be Virtual KMS, skip\n",i);
+				fprintf(stderr,"drm: device card%d seems to be Virtual KMS, skip\n",i);
 				close(sfd);
 				close(dfd);
 				continue;
@@ -541,8 +541,8 @@ static int _drm_scan(){
 }
 int drm_scan_init(unsigned int fourcc){
 	int fd;
-	if((fd=_drm_scan())<0)return return_stderr_printf(-1,"init scan failed\n");
-	if(_drm_init_fd(fd,fourcc)<0)return return_stderr_printf(-1,"init failed\n");
+	if((fd=_drm_scan())<0)return return_stderr_printf(-1,"drm: init scan failed\n");
+	if(_drm_init_fd(fd,fourcc)<0)return return_stderr_printf(-1,"drm: init failed\n");
 	return 0;
 }
 int drm_scan_init_register(unsigned int fourcc){
