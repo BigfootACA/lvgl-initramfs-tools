@@ -29,8 +29,8 @@ static void*fbdev_refresh(void *args){
 	return NULL;
 }
 static int fbdev_refresher_start(){
-	if(fbrt)return return_stderr_printf(-1,"fbdev refresher thread already running\n");
-	if(pthread_create(&fbrt,NULL,fbdev_refresh,(void*)0)<0)return return_stderr_printf(-1,"failed to start refresher thread\n");
+	if(fbrt)return return_stderr_printf(-1,"fbdev: refresher thread already running\n");
+	if(pthread_create(&fbrt,NULL,fbdev_refresh,(void*)0)<0)return return_stderr_printf(-1,"fbdev: failed to start refresher thread\n");
 	else pthread_setname_np(fbrt,"FrameBuffer Refresher Thread");
 	return 0;
 }
@@ -51,7 +51,7 @@ static int set_brightness_percent(char*name,int percent){
 		read(dmax,buff,64)<=0||
 		(max=atol(buff))<=0
 	){
-		printf("failed to open device %s",name);
+		printf("fbdev: failed to open device %s",name);
 		if(errno>0)printf(": %m\n");
 		goto end;
 	}
@@ -60,8 +60,8 @@ static int set_brightness_percent(char*name,int percent){
 	c=strlen(buff);
 	errno=0;
 	if((dcur=openat(dir,"brightness",O_WRONLY))<0||write(dcur,buff,c)!=c){
-		printf("failed to write device %s",name);
-		if(errno>0)printf(": %m\n");
+		printf("fbdev: failed to write device %s",name);
+		printf(errno>0?": %m\n":"\n");
 		goto end;
 	}
 	end:
@@ -71,43 +71,43 @@ static int set_brightness_percent(char*name,int percent){
 	return r;
 }
 static int _fbdev_get_info(){
-	if(ioctl(fbfd,FBIOGET_FSCREENINFO,&finfo)==-1)return return_perror(-1,"ioctl FBIOGET_FSCREENINFO");
-	if(ioctl(fbfd,FBIOGET_VSCREENINFO,&vinfo)==-1)return return_perror(-1,"ioctl FBIOGET_VSCREENINFO");
+	if(ioctl(fbfd,FBIOGET_FSCREENINFO,&finfo)==-1)return return_perror(-1,"fbdev: ioctl FBIOGET_FSCREENINFO");
+	if(ioctl(fbfd,FBIOGET_VSCREENINFO,&vinfo)==-1)return return_perror(-1,"fbdev: ioctl FBIOGET_VSCREENINFO");
 	return 0;
 }
 static int _tty_init(){//from xorg-server
 	int fd;
-	if((fd=open("/dev/tty0",O_WRONLY,0))<0)return return_perror(-1,"open tty0");
+	if((fd=open("/dev/tty0",O_WRONLY,0))<0)return return_perror(-1,"fbdev: open tty0");
 	int vt=-1;
 	if(ioctl(fd,VT_OPENQRY,&vt)<0){
 		close(fd);
-		return return_perror(-1,"ioctl VT_OPENQRY");
+		return return_perror(-1,"fbdev: ioctl VT_OPENQRY");
 	}
 	close(fd);
-	if(vt<0||vt>64)return return_stderr_printf(-1,"cannot find a free vt\n");
+	if(vt<0||vt>64)return return_stderr_printf(-1,"fbdev: cannot find a free vt\n");
 	char vtname[16]={0};
 	snprintf(vtname,sizeof(vtname),"/dev/tty%d",vt);
-	if((fd=open(vtname,O_RDWR|O_NDELAY,0))<0)return return_perror(-1,"open %s",vtname);
+	if((fd=open(vtname,O_RDWR|O_NDELAY,0))<0)return return_perror(-1,"fbdev: open %s",vtname);
 	struct vt_stat vts;
 	if(ioctl(fd,VT_GETSTATE,&vts)<0){
 		close(fd);
-		return return_perror(-1,"ioctl VT_GETSTATE");
+		return return_perror(-1,"fbdev: ioctl VT_GETSTATE");
 	}
 	if(ioctl(fd,VT_ACTIVATE,vt)<0){
 		close(fd);
-		return return_perror(-1,"ioctl VT_ACTIVATE");
+		return return_perror(-1,"fbdev: ioctl VT_ACTIVATE");
 	}
 	if(ioctl(fd,VT_WAITACTIVE,vt)<0){
 		close(fd);
-		return return_perror(-1,"ioctl VT_WAITACTIVE");
+		return return_perror(-1,"fbdev: ioctl VT_WAITACTIVE");
 	}
 	if(ioctl(fd,KDSETMODE,KD_GRAPHICS)<0){
 		close(fd);
-		return return_perror(-1,"ioctl KDSETMODE");
+		return return_perror(-1,"fbdev: ioctl KDSETMODE");
 	}
 	if(ioctl(fd,KDSKBMODE,K_OFF)<0){
 		close(fd);
-		return return_perror(-1,"ioctl KDSKBMODE");
+		return return_perror(-1,"fbdev: ioctl KDSKBMODE");
 	}
 	return (vtfd=fd);
 }
@@ -115,7 +115,7 @@ static int _fbdev_init_fd(){
 	if(_fbdev_get_info()<0)return -1;
 	screensize=finfo.smem_len;
 	fbp=(char*)mmap(0,screensize,PROT_READ|PROT_WRITE,MAP_SHARED,fbfd,0);
-	if((intptr_t)fbp==-1)return return_perror(-1,"mmap");
+	if((intptr_t)fbp==-1)return return_perror(-1,"fbdev: mmap");
 	memset(fbp,0,screensize);
 	ioctl(fbfd,FBIOPAN_DISPLAY,&vinfo);
 	ioctl(fbfd,FBIOBLANK,0);
@@ -125,9 +125,9 @@ static int _fbdev_init_fd(){
 int fbdev_init(char*dev){
 	if(!dev)return -1;
 	_tty_init();
-	if((fbfd=open(dev,O_RDWR))<0)return return_perror(-1,"open device");
+	if((fbfd=open(dev,O_RDWR))<0)return return_perror(-1,"fbdev: open device");
 	if(_fbdev_init_fd()<0)return -1;
-	fprintf(stderr,"init fbdev %s done\n",dev);
+	fprintf(stderr,"fbdev: init fbdev %s done\n",dev);
 	return 0;
 }
 void fbdev_exit(void){
@@ -154,7 +154,7 @@ static int _fbdev_register(){
 	lv_disp_drv_init(&disp_drv);
 	disp_drv.hor_res=vinfo.xres;
 	disp_drv.ver_res=vinfo.yres;
-	fprintf(stderr,"screen resolution: %dx%d\n",vinfo.xres,vinfo.yres);
+	fprintf(stderr,"fbdev: screen resolution: %dx%d\n",vinfo.xres,vinfo.yres);
 	disp_drv.buffer=&disp_buf;
 	disp_drv.flush_cb=fbdev_flush;
 	lv_disp_drv_register(&disp_drv);
@@ -177,7 +177,7 @@ static int _fbdev_scan(){
 	char*dfmt,*dgfmt,*sfmt,*driver;
 	char drbuff[128]={0},sdev[256]={0},ddev[256]={0};
 	bool x=access("/dev/graphics",F_OK)==0;
-	if(!x&&errno!=ENOENT)return return_perror(-1,"access /dev");
+	if(!x&&errno!=ENOENT)return return_perror(-1,"fbdev: access /dev/graphics");
 	dgfmt="/dev/graphics/fb%d";
 	dfmt="/dev/fb%d";
 	sfmt="/sys/class/graphics/fb%d";
@@ -187,25 +187,25 @@ static int _fbdev_scan(){
 		snprintf(sdev,255,sfmt,i);
 		snprintf(ddev,255,dfmt,i);
 		if((sfd=open(sdev,O_DIRECTORY|O_RDONLY))<0){
-			if(errno!=ENOENT)stderr_perror("open sysfs class graphics dev fb%d",i);
+			if(errno!=ENOENT)stderr_perror("fbdev: open sysfs class graphics dev fb%d",i);
 			continue;
 		}
 		if((dfd=open(ddev,O_RDWR))<0){
-			if(errno!=ENOENT)stderr_perror("open device %s",ddev);
+			if(errno!=ENOENT)stderr_perror("fbdev: open device %s",ddev);
 			memset(ddev,0,256);
 			snprintf(ddev,255,dgfmt,i);
 			if((dfd=open(ddev,O_RDWR))<0){
-				if(errno!=ENOENT)stderr_perror("open device %s",ddev);
+				if(errno!=ENOENT)stderr_perror("fbdev: open device %s",ddev);
 				close(sfd);
 				continue;
 			}
 		}
-		fprintf(stderr,"found framebuffer device %s\n",ddev);
+		fprintf(stderr,"fbdev: found framebuffer device %s\n",ddev);
 		memset(drbuff,0,127);
 		if((driver=_fbdev_get_driver_name(sfd,drbuff,127))){
-			fprintf(stderr,"scan framebuffer device fb%d use driver %s\n",i,driver);
+			fprintf(stderr,"fbdev: scan framebuffer device fb%d use driver %s\n",i,driver);
 			if(!strcmp(driver,"vfb")){
-				fprintf(stderr,"device fb%d seems to be Virtual FrameBuffer, skip\n",i);
+				fprintf(stderr,"fbdev: device fb%d seems to be Virtual FrameBuffer, skip\n",i);
 				close(sfd);
 				close(dfd);
 				continue;
@@ -214,14 +214,14 @@ static int _fbdev_scan(){
 		close(sfd);
 		return dfd;
 	}
-	fprintf(stderr,"no fbdev found.\n");
+	fprintf(stderr,"fbdev: no fbdev found.\n");
 	return -1;
 }
 int fbdev_scan_init(){
 	int fd;
-	if((fd=_fbdev_scan())<0)return return_stderr_printf(-1,"init scan failed\n");
+	if((fd=_fbdev_scan())<0)return return_stderr_printf(-1,"fbdev: init scan failed\n");
 	fbfd=fd;
-	if(_fbdev_init_fd()<0)return return_stderr_printf(-1,"init failed\n");
+	if(_fbdev_init_fd()<0)return return_stderr_printf(-1,"fbdev: init failed\n");
 	return 0;
 }
 int fbdev_scan_init_register(){
